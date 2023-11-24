@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <div class="container-fluid page-body-wrapper">
+        <div class="content-wrapper container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <h2 class="text-center mb-4">Modifier mes informations</h2>
+                            <div class="text-center my-2">
+                                {% if app.user %}
+                                    {% if app.user.avatar %}
+                                        <img src="{{ asset('uploads/' ~ app.user.avatar) }}" alt="Avatar" class="img-fluid rounded-circle" style="width: 300px; height: 300px; border: 1px solid #000000"/>
+                                    {% else %}
+                                        <img src="{{ asset('uploads/avatarbasique_1.png') }}" alt="image!" class="img-fluid rounded-circle" style="width: 300px; height: 300px; border: 1px solid #000000"/>
+                                    {% endif %}
+                                {% else %}
+                                    <p>Utilisateur non connecté</p>
+                                {% endif %}
+                            </div>
+                            {{ form_start(form) }}
+                            <div class="mb-3">
+                                {{ form_row(form.field1, {'attr': {'class': 'form-control', 'placeholder': 'Champ 1'}}) }}
+                                {{ form_row(form.field2, {'attr': {'class': 'form-control', 'placeholder': 'Champ 2'}}) }}
+                                {# Ajoutez d'autres champs de formulaire selon votre besoin #}
+                            </div>
+                            <button class="btn btn-warning btn-block" type="submit">Enregistrer les modifications</button>
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,24 @@
+/* public/css/styles.css */
+
+body {
+    background-color: #000; /* Noir */
+    color: #000; 
+}
+
+.tableau-container {
+    max-width: 600px; /* Ajustez la largeur maximale selon vos besoins */
+}
+
+.table {
+    background-color: #0077c7; /* Bleu */
+    color: #fff; /* Blanc */
+}
+
+.table tr, .table td {
+    width: 2em; /* Ajustez la largeur des cellules selon vos besoins */
+    height: 2em; /* Ajustez la hauteur des cellules selon vos besoins */
+}
+
+.cell {
+    font-size: 1.5em; /* Ajustez la taille de la police selon vos besoins */
+}

@@ -1,0 +1,235 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+<style>
+    .calendar-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        max-width: 800px;
+        margin: 20px auto;
+    }
+
+    .calendar {
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        margin-left: 1px;
+    }
+
+    .calendar-title {
+        text-align: left;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+    }
+
+    .calendar-day {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        transition: background-color 0.3s;
+    }
+
+    .calendar-day:hover {
+        background-color: #eee;
+    }
+
+    .profile-link {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 20px;
+        text-decoration: none;
+        color: #fff;
+        background-color: #3498db; /* Couleur du fond du bouton */
+        border: 1px solid #2980b9; /* Couleur de la bordure du bouton */
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    .profile-link:hover {
+        background-color: #2980b9; /* Couleur du fond du bouton au survol */
+    }
+
+    .profile-link i {
+        margin-right: 5px;
+    }
+
+    #myTable {
+    margin: 0 auto; /* Centre le tableau horizontalement */
+    width: 40%; /* Ajuste la largeur du tableau selon vos besoins */
+    background-color: #2b2b2b;
+    }
+
+    body {
+        background-color: black;
+        color: white; /* Pour changer la couleur du texte en blanc */
+        text-align: center;
+    }
+    
+    .small-input {
+        font-size: 12px; /* Taille de police plus petite */
+        background-color: black; /* Couleur du texte */
+        /* Ajoutez d'autres styles personnalisés si nécessaire */
+        }
+    .modal-label {
+        color: black;
+    }
+</style>
+    <div class="row tableau-container" style="background-color: #00000;">
+        <div class="col">
+            <h1>Mot affiché dans un tableau</h1><hr>
+            
+            
+            <table id="myTable" class="table table-bordered">
+                <tbody>
+                    {# Générer un maximum de 8 lignes #}
+                    {% for j in 1..8 %}
+                        <tr>
+                            {% if historiqueTentatives[j - 1] is defined %}
+                            {# Pour les autres colonnes, afficher les lettres du mot #}
+                            {% set resultat = historiqueTentatives[j - 1].resultat %}
+                            {% for i, lettre in historiqueTentatives[j - 1].mot|split('') %}
+                                {% set classeLettre = (resultat == 0 and lettre in lettresCorrectes) ? 'lettre-correcte' : (resultat == 0 and lettre in lettresMalPlacees) ? 'lettre-mal-placee' : '' %}
+                                {% set backgroundStyle = (lettre in lettresCorrectes) ? 'background-color: #FF0000;' : '' %}
+
+                            <td class="{{ classeLettre }}" style="background-color: #0077C7;">{{ lettre }}</td>
+                            
+                            {% endfor %}  
+                        {% else %}
+
+                                {# Si aucune tentative, afficher des cellules vides pour toute la ligne #}
+                                {# Afficher la première lettre dans la première cellule de la première ligne #}
+                                <td class="text-center" style="width: 40px; height: 30px; background-color: #0077C7; border: 2px solid #fff;">{{ premiereLettre }}</td>
+
+                                {% for i in 1..longueurMot %}
+                                    <td id="cell-{{ j }}-{{ i }}" class="editable-cell" contenteditable="true" oninput="limiterSaisie(this)" style="background-color: #0077C7; border: 2px solid #fff;"></td>
+                                {% endfor %}
+
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+
+
+        {{ form_start(form) }}
+            {{ form_row(form.mot, {
+                'label': false,
+                'attr': {
+                        
+                        'oninput': 'capturerLettres()',
+                        'class': 'form-control border border-black small-input',
+                        
+                        }           
+                    }) }}
+           {{ form_widget(form.ok, {'attr': {'class': 'btn btn-light', 'onclick': 'recupererMot(); afficherLettres();'}}) }}
+        {{ form_end(form) }}
+
+        </div>
+    </div>
+    {% if historiqueTentatives|length == 8 and resultat == 0 %}
+    <script>
+        alert("Dommage ! Vous n'avez pas gagné cette fois-ci.");
+    </script>
+        <!-- Bouton pour ouvrir la fenêtre modale -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#victoryModal">
+            Parti terminée! Cliquez pour noter et liker le mot. 
+        </button>
+    {% endif %}
+  
+
+    {% if resultat == 1 %}
+    <script>
+            alert("Félicitations ! Vous avez gagné !");
+    </script>
+        <!-- Bouton pour ouvrir la fenêtre modale -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#victoryModal">
+            Parti terminée! Cliquez pour noter et liker le mot. 
+        </button>
+    {% endif %}
+
+  <div class="calendar-container">
+    <div class="calendar">
+        <div class="calendar-title">
+            Choisissez un jour pour jouer
+        </div>
+
+        <div class="calendar-grid">
+            {% for row in calendar %}
+                {% for day in row %}
+                    <a href="{{ path('app_mots', {'cell': day}) }}" class="calendar-day">{{ day }}</a>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <a href="{{ path('profil_modifier', {'id': app.user.id}) }}" class="profile-link">
+        <i class="fas fa-pencil-alt"></i> Modifier le profil
+    </a>
+</div>
+<script>
+        function limiterSaisie(cellule) {
+            // Limiter la saisie à un seul caractère
+            cellule.innerText = cellule.innerText.charAt(0);
+        }
+        function recupererMot() {
+            // Récupérer les lettres des cellules
+            var mot = '{{ premiereLettre }}';
+
+            for (let i = 2; i <= longueurMot; i++) {
+                let cellule = document.getElementById('cell-1-' + i);
+                mot += cellule.innerText;
+            }
+
+            // Mettre à jour la valeur du champ 'mot' dans le formulaire
+            document.getElementById('game_mot').value = mot;
+        }
+
+
+
+    // Création d'un tableau pour conserver les lettres saisies par l'utilisateur 
+        let lettresSaisies = ['{{ premiereLettre }}'];
+
+    // je récupère les lettres entrées par l'utilisateur 
+    $(document).ready(function () {
+        $('.editable-cell').on('input', function () {
+            // Capturer la saisie de l'utilisateur
+            var lettre = $(this).text().charAt(0);
+
+            // Mettre à jour le champ de saisie caché dans le formulaire
+            var mot = '{{ premiereLettre }}';
+            $('.editable-cell').each(function () {
+                mot += $(this).text();
+            });
+            $('#game_mot').val(mot);       
+
+        });
+    });
+</script>
+
+
+    <!-- Fenêtre modale pour le like -->
+    <div class="modal" id="victoryModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-label" id="exampleModalLabel">Liker et noter le mot</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    
+                        
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
