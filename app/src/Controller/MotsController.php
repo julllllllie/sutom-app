@@ -29,16 +29,14 @@ class MotsController extends AbstractController
         // Obtenez la première lettre du mot
         $premiereLettre = mb_substr($mot, 0, 1, 'UTF-8');
         $longueur = mb_strlen($mot, 'UTF-8');
-        // je récupère la longueur de mon mot, que je soustrait à 1 pour mon affichage car je récupere dès le début la premiere lettre 
-        $longueurMot = $longueur -1;
-
+        $longueurMot = $longueur - 1;
     
         $dateActuelle = new \DateTime();
         $nombreJours = cal_days_in_month(CAL_GREGORIAN, $dateActuelle->format('m'), $dateActuelle->format('Y'));
     
         $calendar = $this->generateCalendar($nombreJours);
     
-        $currentDate = new \DateTime(); // Change this if you want to use a different date
+        $currentDate = new \DateTime();
 
         // Obtenez l'historique des tentatives pour l'utilisateur et le mot en cours
         $historiqueTentatives = $essaiMotRepository->findBy(['idu' => $idu, 'idMot' => $motId]);
@@ -56,7 +54,7 @@ class MotsController extends AbstractController
         $lettresCorrectes = [];
         $lettresMalPlacees = [];
         $resultat = 0;
-        // Si le formulaire est soumis et valide, faites quelque chose avec les données
+        // Si le formulaire est soumis et valide
         if ($form->isSubmitted() && $form->isValid()) {
             // Vérifiez si le bouton "OK" a été cliqué
             if ($form->get('ok')->isClicked()) {
@@ -66,14 +64,10 @@ class MotsController extends AbstractController
               
                 // Obtenez le nombre de tentatives actuel (ou initialisez-le à 0)
                 $tentative = $essaiMotRepository->count(['mot' => $motSaisi]) + 1;
-                
                
                 // Obtenez l'entité Mots associée à $motSaisi (assurez-vous que cette partie est correcte)
                 $motEntity = $motRepository->findOneBy(['mot' => $motSaisi]);
                 
-
-
-                // on incrémente le résultat, si il y a aucune differences dans le mot alors resultat à 1: c'est gagné sinon resultat à 0. 
                 // Vérifie si les mots ont la même longueur.
                 if (strlen($motSaisi) === strlen($mot)) {
                     // Parcours les lettres et compare les lettres et leur position.
@@ -94,21 +88,15 @@ class MotsController extends AbstractController
                         }
 
                     }
-                   
-                    //incrementation du résultat dans notre bdd
+                    // on incrémente le résultat, si il y a aucune differences dans le mot alors resultat à 1: c'est gagné sinon resultat à 0.
                     if ($lettresMot === $lettresSaisies) {
                         // Toutes les lettres sont correctes et à la bonne position.
                         $resultat = 1;
-                        $lettresCorrectes = $lettresMot;
                     } else {
                         // Au moins une lettre est incorrecte ou mal placée.
                         $resultat = 0;
-                        $lettresCorrectes = array_intersect($lettresMot, $lettresSaisies);
-                        $lettresMalPlacees = array_diff($lettresSaisies, $lettresCorrectes);
                     }
                 }
-
-                
                 // Enregistrez le mot essayé dans la table "EssaiMot" avec le nombre de tentatives et le mot 
                 $essaiMot = new EssaiMot();
                 $essaiMot->setMot($motSaisi);
@@ -122,11 +110,14 @@ class MotsController extends AbstractController
                 $entityManager->flush();
 
                 // Redirige l'utilisateur vers la même page après le traitement du formulaire
-                return $this->redirectToRoute('app_mots', ['cell' => $cell]);
-               
+            return $this->redirectToRoute('app_mots', ['cell' => $cell]);   
             }
         }
-        
+        // Gérez la notation si le formulaire est soumis
+        if ($request->isMethod('POST')) {
+            $rating = $request->request->get('rating');
+            // Enregistrez la notation dans la base de données ou faites toute autre logique nécessaire
+        }
 return $this->render('mots/index.html.twig', [
     'premiereLettre' => $premiereLettre,
     'mot' => $mot,
@@ -143,7 +134,6 @@ return $this->render('mots/index.html.twig', [
     'resultat' => $resultat,
     'motId' => $motId,
     'cell' => $cell,
-    'motSaisi' => $motSaisi,
 ]);
     }
     
@@ -157,14 +147,12 @@ return $this->render('mots/index.html.twig', [
         $date = new \DateTime("$annee-$mois-$cell");
         // Recherchez le mot associé à la date dans la base de données
         $motEntity = $motRepository->findOneBy(['onlineAt' => $date]);
-        // $keyboard = array_chunk($motEntity,8);
         // Vérifiez si l'entité est nulle avant de la retourner
         if ($motEntity !== null) {
             return $motEntity;
         } else {
             // Si aucun mot n'est trouvé, utilisez un mot par défaut
-            // Ici, vous pouvez également choisir de retourner null ou jeter une exception selon vos besoins
-            return new Mots(); // Vous devrez peut-être ajuster cela en fonction de votre code réel
+            return new Mots();
         }
     }
     

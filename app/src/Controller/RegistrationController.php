@@ -20,44 +20,43 @@ class RegistrationController extends AbstractController
     #[Route('/register', name: 'app_register')]
     public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager, PersistenceManagerRegistry $doctrine): Response
     {
-        $user = new User();
         
+        $user = new User();
+        $user->setAvatar(''); // Initialisation à une chaîne vide par exemple
         $form = $this->createForm(RegistrationFormType::class, $user);
         $form->handleRequest($request);
 
             if ($form->isSubmitted() && $form->isValid()) {
-                // encode the plain password
+                // encode le mot de passe
                 $user->setPassword(
                     $userPasswordHasher->hashPassword(
                         $user,
                         $form->get('plainPassword')->getData()
                     )
                 );
-                
 
+                // avatar
                 $avatarFile = $form->get('avatar')->getData();
 
                 if ($avatarFile) {
                     // Gérez le stockage de l'avatar
                     $uploadsDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads';
                     $avatarFileName = md5(uniqid()) . '.' . $avatarFile->guessExtension();
-                    $avatarFile->move($uploadsDirectory, $avatarFileName);
-
-                    dump($uploadsDirectory . '/' . $avatarFileName);
+                    $avatarFile->move(
+                        $uploadsDirectory,
+                        $avatarFileName
+                    );
+    
                     // Mettez à jour le champ d'avatar de l'utilisateur avec le nom du fichier
                     $user->setAvatar($avatarFileName);
-                    $entityManager->persist($user);
-                    $entityManager->flush();
-
                 }
-
-               
-                
                 $entityManager = $doctrine->getManager();
                 $entityManager->persist($user);
                 $entityManager->flush();
 
-                return $this->redirectToRoute('app_mots');
+                
+               
+                return $this->redirectToRoute('app_login');
             }
         
 
